@@ -7,8 +7,7 @@ export async function GET() {
     const session = await getServerSession(authOptions)
     try {        
         const userId = session?.user?.id;
-
-        // Fetch events associated with the user, including additional event details
+        
         const events = await prisma.eventRegistration.findMany({
             where: {
                 userId: userId
@@ -29,8 +28,7 @@ export async function GET() {
                 }
             }
         });
-
-        // Extract the event details from the joined query results
+        
         const formattedEvents = events.map(event => ({
             id: event.event?.id,
             title: event.event?.title,
