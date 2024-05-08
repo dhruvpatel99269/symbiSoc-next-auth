@@ -1,3 +1,5 @@
+// src/app/api/auth/[...nextauth].js
+
 import NextAuth from "next-auth/next";
 import prisma from "../../../../lib/db";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -41,11 +43,12 @@ const authOptions = {
         if (!passwordMatch) {
           throw new Error("Incorrect password");
         }
+        
         const roleMatch = user.role === credentials.role;
         if (!roleMatch) {
           throw new Error("Incorrect role");
         }
-        console.log(user)
+
         return {
           id: user.id,
           PRN: user.PRN,
@@ -85,6 +88,4 @@ const authOptions = {
   secret: process.env.SECRET,
 };
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+export default NextAuth(authOptions);
