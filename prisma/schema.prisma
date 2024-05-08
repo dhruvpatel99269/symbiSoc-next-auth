@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String              @id @default(auto()) @map("_id") @db.ObjectId
+  PRN            String              @unique
+  email          String?             @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  role           role                @default(STUDENT)
+  registrations  EventRegistration[]
+  attendess          EventAttendees[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  accounts Account[]
+}
+
+enum role {
+  STUDENT
+  FACULTY
+  CLUBINCHARGE
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Event {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  description        String
+  banner             String?
+  date               DateTime
+  time               String
+  location           String
+  speaker            String
+  speakerDesignation String
+  organizingClub     String
+  speakerCompany     String?
+  speakerMail        String?
+  speakerContact     String?
+  faculty            String?
+  facultyContact     String?
+  facultyMail        String?
+  course             String?
+  batch              String?
+  branch             String?
+  copo               String?
+  academicyear       String?
+  semester           semester        @default(ODD)
+  year               year            @default(FIRSTYEAR)
+  division           division        @default(A)
+
+  registrations      EventRegistration[]
+  attendess          EventAttendees[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum semester {
+  ODD
+  EVEN
+}
+
+enum year {
+  FIRSTYEAR
+  SECONDYEAR
+  THIRDYEAR
+  FOURTHYEAR
+}
+
+enum division {
+  A
+  B
+  C
+  D
+}
+
+model EventRegistration {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId          String   @db.ObjectId
+  userId           String   @db.ObjectId
+  registrationDate DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event? @relation(fields: [eventId], references: [id])
+  user  User?  @relation(fields: [userId], references: [id])
+}
+
+model EventAttendees {
+  id               String @id @default(auto())  @map("_id") @db.ObjectId
+  eventId          String @db.ObjectId
+  userId           String @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event Event? @relation(fields: [eventId], references: [id])
+  user  User?  @relation(fields: [userId], references: [id])
+}
