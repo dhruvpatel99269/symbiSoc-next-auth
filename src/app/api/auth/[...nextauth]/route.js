@@ -1,6 +1,3 @@
-// src/app/api/auth/[...nextauth].js
-
-import NextAuth from "next-auth/next";
 import prisma from "../../../../lib/db";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -88,4 +85,4 @@ const authOptions = {
   secret: process.env.SECRET,
 };
 
-export default NextAuth(authOptions);
+export default authOptions;
