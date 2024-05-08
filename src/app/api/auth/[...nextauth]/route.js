@@ -3,61 +3,57 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 
-const authOptions = {
-  adapter: PrismaAdapter(prisma),
-  pages: {
-    signIn: "/sign-in",
-    signUp: "/sign-up",
-  },
-  providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "text", placeholder: "jsmith" },
-        password: { label: "Password", type: "password" },
-        role: { label: "Role", type: "text", placeholder: "Student" },
-      },
-      async authorize(credentials) {
-        if (!credentials.email || !credentials.password) {
-          throw new Error("Please enter an email and password");
-        }
+const createAuthOptions = async () => {
+  const adapter = PrismaAdapter(prisma);
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        });
+  const credentialsProvider = CredentialsProvider({
+    name: "credentials",
+    credentials: {
+      email: { label: "Email", type: "text", placeholder: "jsmith" },
+      password: { label: "Password", type: "password" },
+      role: { label: "Role", type: "text", placeholder: "Student" },
+    },
+    async authorize(credentials) {
+      if (!credentials.email || !credentials.password) {
+        throw new Error("Please enter an email and password");
+      }
 
-        if (!user) {
-          throw new Error("No user found");
-        }
+      const user = await prisma.user.findUnique({
+        where: {
+          email: credentials.email,
+        },
+      });
 
-        const passwordMatch = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword
-        );
+      if (!user) {
+        throw new Error("No user found");
+      }
 
-        if (!passwordMatch) {
-          throw new Error("Incorrect password");
-        }
-        
-        const roleMatch = user.role === credentials.role;
-        if (!roleMatch) {
-          throw new Error("Incorrect role");
-        }
+      const passwordMatch = await bcrypt.compare(
+        credentials.password,
+        user.hashedPassword
+      );
 
-        return {
-          id: user.id,
-          PRN: user.PRN,
-          email: user.email,
-          role: user.role,
-          image: user.image,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({token, user}) {
+      if (!passwordMatch) {
+        throw new Error("Incorrect password");
+      }
+
+      const roleMatch = user.role === credentials.role;
+      if (!roleMatch) {
+        throw new Error("Incorrect role");
+      }
+
+      return {
+        id: user.id,
+        PRN: user.PRN,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+      };
+    },
+  });
+
+  const callbacks = {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.PRN = user.PRN;
@@ -67,7 +63,7 @@ const authOptions = {
       }
       return token;
     },
-    async session({session, token}) {
+    async session({ session, token }) {
       if (token) {
         session.user.id = token.id ?? session.user.id;
         session.user.PRN = token.PRN ?? session.user.PRN;
@@ -77,12 +73,17 @@ const authOptions = {
       }
       return session;
     },
-  },
-  session: {
+  };
+
+  const session = {
     strategy: "jwt",
-  },
-  debug: process.env.NODE_ENV === "development",
-  secret: process.env.SECRET,
+  };
+
+  const debug = process.env.NODE_ENV === "development";
+
+  const secret = process.env.SECRET;
+
+  return { adapter, pages, providers: [credentialsProvider], callbacks, session, debug, secret };
 };
 
-export default authOptions;
+export default createAuthOptions;
